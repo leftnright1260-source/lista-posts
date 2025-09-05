@@ -4,7 +4,7 @@ PROGRAM CREATED IN TURBO PASACAL
 BY: MR. JOSE GALINDO 
 THE CREATOR OF THE BLOGS: 
 https://penademuerteya.com
-https://eltridentedegabriel.link
+https://144k.xxy
 https://lavirgenmecreera.com
 MORE ABOUT ME:
 https://youtu.be/aHOr9nm957U
@@ -2029,3 +2029,4 @@ Repeat
  end;
 until (lomenu=3);
 End.
+
