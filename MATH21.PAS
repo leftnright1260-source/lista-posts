@@ -3,9 +3,9 @@ Program FORMULASMATEMATICAS;
 PROGRAM CREATED IN TURBO PASACAL 
 BY: MR. JOSE GALINDO 
 THE CREATOR OF THE BLOGS: 
-https://penademuerteya.com
-https://144k.xxy
-https://lavirgenmecreera.com
+https://ntiend.me
+https://144k.xyz
+https://ellameencontrara.com
 MORE ABOUT ME:
 https://youtu.be/aHOr9nm957U
 https://www.chess.com/es/member/bestiadn-dot-com
@@ -2029,4 +2029,5 @@ Repeat
  end;
 until (lomenu=3);
 End.
+
 
