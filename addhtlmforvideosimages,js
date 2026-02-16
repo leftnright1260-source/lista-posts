@@ -1,0 +1,140 @@
+<div style="max-width:900px;margin:auto">
+
+<textarea id="inputText" style="width:100%;height:200px;" placeholder="Pega aquí tus URLs y texto"></textarea>
+
+<div style="margin-top:10px;">
+<button onclick="processAndCopy()">Procesar y Copiar</button>
+<button onclick="clearInput()">Limpiar</button>
+<button onclick="saveToFile()">Guardar TXT</button>
+</div>
+
+<textarea id="outputText" readonly
+style="width:100%;height:250px;margin-top:15px;"
+placeholder="Aquí aparecerá el resultado"></textarea>
+
+<div id="msg" style="
+opacity:0;
+transition:opacity 1.5s;
+margin-top:8px;
+font-weight:bold;
+color:green;">
+Procesado y copiado
+</div>
+
+</div>
+
+<script>
+
+const MAX_WIDTH = 750;
+  
+function cleanUrl(url) {
+  return url.replace(/[),.;:"'»]+$/g, '');
+}
+
+
+function convertContent(content) {
+
+  const MAX_WIDTH = 750;
+  let lines = content.split(/\r?\n/);
+  let output = [];
+
+  for (let line of lines) {
+
+    // let trimmed = line.trim();
+//  let trimmed = cleanUrl(line.trim());
+let trimmed = cleanUrl(line.replace(/\u00A0/g,' ').trim().split(/\s+/)[0]);
+
+    /* Si la línea NO es solo un URL, dejarla igual */
+    if (!/^https?:\/\//i.test(trimmed)) {
+      output.push(line);
+      continue;
+    }
+
+    /* -------- YOUTUBE -------- */
+let yt = trimmed.match(/(?:watch\?v=|youtu\.be\/|shorts\/)([a-zA-Z0-9_-]{11})/);
+
+if (yt) {
+  output.push(`
+<div style="max-width:${MAX_WIDTH}px;margin:20px auto;">
+<iframe width="100%" height="422"
+src="https://www.youtube.com/embed/${yt[1]}"
+frameborder="0" allowfullscreen></iframe>
+</div>`);
+  continue;
+}
+
+
+
+    /* -------- IMÁGENES -------- */
+    if (trimmed.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
+      output.push(`
+<div style="text-align:center;margin:15px 0;">
+<img src="${trimmed}" style="max-width:${MAX_WIDTH}px;width:100%;height:auto;">
+</div>`);
+      continue;
+    }
+
+    /* -------- DOCUMENTOS -------- */
+    if (trimmed.match(/\.(pdf|docx|xlsx|pptx|txt|zip)$/i)) {
+      output.push(`
+<p style="text-align:center;">
+<a href="${trimmed}" rel="follow" target="_blank">${trimmed}</a>
+</p>`);
+      continue;
+    }
+
+    /* -------- OTROS LINKS -------- */
+    output.push(`
+<p style="text-align:center;">
+<a href="${trimmed}" rel="follow" target="_blank">${trimmed}</a>
+
+</p>`);
+  }
+
+  return output.join("\n");
+}
+
+
+async function processAndCopy() {
+
+  let input = document.getElementById("inputText").value;
+  let result = convertContent("\n" + input + "\n");
+
+  document.getElementById("outputText").value = result;
+
+  try {
+    await navigator.clipboard.writeText(result);
+    showMsg("Texto procesado y copiado");
+  } catch (err) {
+    showMsg("Procesado (copiado manual requerido)");
+  }
+}
+
+function clearInput() {
+  document.getElementById("inputText").value = "";
+}
+
+function saveToFile() {
+
+  let text = document.getElementById("outputText").value;
+
+  const blob = new Blob([text], {type: "text/plain"});
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "resultado.txt";
+  link.click();
+
+  showMsg("Archivo guardado");
+}
+
+function showMsg(text) {
+  const msg = document.getElementById("msg");
+  msg.innerText = text;
+  msg.style.opacity = 1;
+
+  setTimeout(function(){
+    msg.style.opacity = 0;
+  }, 2500);
+}
+
+</script>
