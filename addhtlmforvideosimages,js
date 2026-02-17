@@ -91,7 +91,7 @@ async function processAndCopy() {
   
   try {
     await navigator.clipboard.writeText(result);
-    showMsg("¡URL preservada y copiada!");
+    showMsg("URL preservada y copiada");
   } catch (err) {
     showMsg("Procesado (copia manual)");
   }
