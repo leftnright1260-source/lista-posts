@@ -109,9 +109,3 @@ function clearInput() {
   document.getElementById("outputText").value = "";
 }
 </script>
-<div style="text-align:center;margin:30px 0;">
-<a href="https://antibestia.com/2026/02/15/al-revisar-tus-notas-y-el-contenido-del-video-queda-claro-tu-no-defiendes-la-biblia-tu-la-diseccionas/" target="_blank">
-<img src="https://antibestia.wordpress.com/wp-content/uploads/2026/02/en-el-equipo-de-la-logica-la-liga-de-la-logica-humana-y-digital.jpg"
-style="max-width:750px;width:100%;height:auto;">
-</a>
-</div>
