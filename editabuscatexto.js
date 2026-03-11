@@ -296,7 +296,44 @@ ${detalle.join('\n')}`;
 	textarea.addEventListener('input', actualizarContador);
 
 	actualizarContador();
+/* ===== CONVERSIONES ===== */
 
+function convertirMayusculas() {
+
+	resultado.innerText = textarea.value.toUpperCase();
+
+}
+
+function convertirMinusculas() {
+
+	resultado.innerText = textarea.value.toLowerCase();
+
+}
+
+function invertirPalabras() {
+
+	const palabras = textarea.value.split(/\s+/);
+	resultado.innerText = palabras.reverse().join(" ");
+
+}
+
+function invertirTextoCompleto() {
+
+	resultado.innerText = textarea.value.split("").reverse().join("");
+
+}
+
+function eliminarSaltosLinea() {
+
+	resultado.innerText = textarea.value.replace(/(\r\n|\n|\r)/g, " ");
+
+}
+
+function eliminarEspacios() {
+
+	resultado.innerText = textarea.value.replace(/\s+/g, "");
+
+}
 </script>
 
 </body>
