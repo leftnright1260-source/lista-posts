@@ -2,14 +2,10 @@ Program FORMULASMATEMATICAS;
 { VER 3 / JUL 8 2022
 PROGRAM CREATED IN TURBO PASACAL 
 BY: MR. JOSE GALINDO 
-THE CREATOR OF THE BLOGS: 
-https://ntiend.me
-https://144k.xyz
-https://ellameencontrara.com
-MORE ABOUT ME:
-https://youtu.be/aHOr9nm957U
+THE CREATOR OF THE BLOG: 
+https://gabriels.work
 https://www.chess.com/es/member/bestiadn-dot-com
-https://twitter.com/jinete_del
+https://twitter.com/josentiende
 FYI: I DOWNLOADED THE TURBO PASCAL COMPILER VERSION I
 USED TO PROGRAM AND RUN THIS FROM HERE:
 https://sourceforge.net/projects/turbopascal-wdb/
