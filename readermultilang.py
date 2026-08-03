@@ -1,3 +1,21 @@
+"""
+Multi-language subtitle renderer built with Python and Tkinter.
+It loads a text file, preprocesses the content, and displays animated
+subtitle blocks on a dedicated projection window. The system automatically
+adjusts font family, font size, and line width based on the selected
+language group (Latin, Cyrillic, CJK, RTL, Indic, etc.), ensuring proper
+rendering across different writing systems.
+
+The subtitle engine removes line breaks, rebuilds the text into readable
+two-line frames, and animates the text with punctuation-aware timing.
+The projection window uses centered text with shadow and outline effects
+for improved readability, making it suitable for screen recording or
+screenshot capture during video production.
+
+The program includes controls for language selection, file loading,
+start, pause, resume, and restart, allowing creators to preview subtitles
+dynamically before integrating them into their editing workflow.
+"""
 import sys
 import time
 import textwrap
