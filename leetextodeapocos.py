@@ -3,8 +3,7 @@ This program is a simple subtitle simulator built with Python and Tkinter.
 It loads a text file, formats its content into wrapped lines, and displays
 the text progressively on a dedicated projection window using a typing-style
 animation. The simulator processes each character with variable timing based
-on punctuation, spacing, and randomness to create a natural reading rhythm.
-
+on punctuation, spacing, and randomness to create a natural reading rhythm. 
 The interface includes a control panel that allows the user to select a text
 file, start the subtitle playback, pause or resume the animation, and reset
 the display. The projection window uses a styled text area designed for
