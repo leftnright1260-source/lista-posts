@@ -1,20 +1,21 @@
 """
-Multi-language subtitle renderer built with Python and Tkinter.
-It loads a text file, preprocesses the content, and displays animated
-subtitle blocks on a dedicated projection window. The system automatically
-adjusts font family, font size, and line width based on the selected
-language group (Latin, Cyrillic, CJK, RTL, Indic, etc.), ensuring proper
-rendering across different writing systems.
+This program is a multi-language subtitle simulator built with Python and Tkinter.
+It loads a text file, preprocesses the content, and displays animated subtitle
+blocks on a dedicated projection window designed for screen recording. The system
+automatically adjusts font family, font size, and line width according to the
+selected language group (Latin, Cyrillic, CJK, RTL, Indic, etc.), ensuring proper
+visual rendering across diverse writing systems.
 
-The subtitle engine removes line breaks, rebuilds the text into readable
-two-line frames, and animates the text with punctuation-aware timing.
-The projection window uses centered text with shadow and outline effects
-for improved readability, making it suitable for screen recording or
-screenshot capture during video production.
+The text is cleaned, unified, wrapped, and grouped into two-line subtitle blocks.
+Each block is animated character-by-character with timing variations based on
+punctuation, multilingual symbols, and natural reading rhythm. A real-time seek
+bar allows the user to navigate through subtitle blocks, preview them instantly,
+and jump to any position without interrupting playback.
 
-The program includes controls for language selection, file loading,
-start, pause, resume, and restart, allowing creators to preview subtitles
-dynamically before integrating them into their editing workflow.
+The control panel provides options for language selection, file loading, start,
+pause, resume, restart, and manual navigation. The projection window uses centered
+text with shadow and outline effects for improved readability, making the tool
+suitable for video production, demonstrations, and simulated subtitle playback.
 """
 import sys
 import time
@@ -26,54 +27,17 @@ import os
 
 # --- Configuración por Grupos Lingüísticos ---
 CONFIG_IDIOMAS = {
-    # 1. CJK (Logográficos: Chino, Japonés, Coreano)
-    "CJK": {
-        "fuente": "Microsoft YaHei",
-        "size": 32,
-        "width": 18,
-        "idiomas": ["Chinese", "Japanese", "Korean"]
-    },
-    # 2. Derecha a Izquierda (RTL: Árabe, Persa, Urdu, Pastún, Hebreo)
-    "RTL": {
-        "fuente": "Segoe UI",
-        "size": 32,
-        "width": 38,
-        "idiomas": ["Arabic", "Persian", "Urdu", "Pastún", "Hebreo"]
-    },
-    # 3. Índicos y Sudeste Asiático (Hindi, Bengalí, Tailandés, Birmano, Télugu, Tamil, etc.)
+    "CJK": {"fuente": "Microsoft YaHei", "size": 32, "width": 18, "idiomas": ["Chinese", "Japanese", "Korean"]},
+    "RTL": {"fuente": "Segoe UI", "size": 32, "width": 38, "idiomas": ["Arabic", "Persian", "Urdu", "Pastún", "Hebreo"]},
     "INDICO_ASIA": {
-        "fuente": "Nirmala UI",
-        "size": 30,
-        "width": 32,
-        "idiomas": [
-            "Bengali", "Panyabí-Pakistán", "Panyabí-India", "Télugu", "Tamil", 
-            "Tailandés", "Birmano", "Nepalí", "Hindi", "Sundanés"
-        ]
+        "fuente": "Nirmala UI", "size": 30, "width": 32,
+        "idiomas": ["Bengali", "Panyabí-Pakistán", "Panyabí-India", "Télugu", "Tamil", "Tailandés", "Birmano", "Nepalí", "Hindi", "Sundanés"]
     },
-    # 4. Ge'ez / Semítico (Amhárico)
-    "AMHARICO": {
-        "fuente": "Ebrima",
-        "size": 30,
-        "width": 35,
-        "idiomas": ["Amhárico"]
-    },
-    # 5. Armenio / Mongol
-    "OTROS_ALFABETOS": {
-        "fuente": "Segoe UI",
-        "size": 30,
-        "width": 38,
-        "idiomas": ["Armenio", "Mongol"]
-    },
-    # 6. Estándar / Alfabeto Latino y Cirílico (Español, Inglés, Ruso, Ucraniano, etc.)
-    "LATINO_CIRILICO": {
-        "fuente": "Segoe UI",
-        "size": 28,
-        "width": 45,
-        "idiomas": [] # Por defecto para todos los demás
-    }
+    "AMHARICO": {"fuente": "Ebrima", "size": 30, "width": 35, "idiomas": ["Amhárico"]},
+    "OTROS_ALFABETOS": {"fuente": "Segoe UI", "size": 30, "width": 38, "idiomas": ["Armenio", "Mongol"]},
+    "LATINO_CIRILICO": {"fuente": "Segoe UI", "size": 28, "width": 45, "idiomas": []}
 }
 
-# Lista completa de tus 67 idiomas
 LISTA_IDIOMAS = [
     "Spanish", "English", "Italian", "French", "Portuguese", "German", "Polish", "Ukrainian", 
     "Russian", "Dutch", "Chinese", "Japanese", "Korean", "Arabic", "Turkish", "Persian", 
@@ -89,17 +53,19 @@ LISTA_IDIOMAS = [
 class SimuladorSubtitulos:
     def __init__(self, root):
         self.root = root
-        self.root.title("Panel de Control - Subtítulos Multi-Idioma")
-        self.root.geometry("480x350")
+        self.root.title("Panel de Control - Subtítulos Pro")
+        self.root.geometry("500x420")
         self.root.resizable(False, False)
 
-        # Variables de control
+        # Variables de estado
         self.escribiendo = False
         self.pausado = False
+        self.arrastrando_slider = False
         self.ruta_archivo = ""
         self.bloques_subtitulos = []
-        
-        # Parámetros visuales activos
+        self.indice_bloque_actual = 0
+
+        # Parámetros visuales
         self.font_family = "Segoe UI"
         self.font_size = 28
         self.ancho_linea = 45
@@ -108,11 +74,11 @@ class SimuladorSubtitulos:
         self.COLOR_SOMBRA = "black"
         self.DESPLAZAMIENTO_SOMBRA = 3
 
-        # 1. Ventana Externa de Proyección (La que se graba)
+        # Ventana Externa de Proyección (La que se graba)
         self.ventana_proyeccion = tk.Toplevel(self.root)
         self.ventana_proyeccion.title("PANTALLA DE GRABACIÓN")
         self.ventana_proyeccion.geometry("1000x400")
-        self.ventana_proyeccion.configure(bg="#126e47") # Fondo Verde Croma
+        self.ventana_proyeccion.configure(bg="#126e47") # Verde Croma
 
         self.canvas = tk.Canvas(
             self.ventana_proyeccion,
@@ -122,19 +88,19 @@ class SimuladorSubtitulos:
         )
         self.canvas.pack(fill="both", expand=True)
 
-        # 2. Panel de Control GUI
+        # Panel de Control GUI
         frame = ttk.Frame(self.root, padding=15)
         frame.pack(fill="both", expand=True)
 
-        # Selector de Idioma
+        # 1. Selector de Idioma
         ttk.Label(frame, text="Idioma del texto:", font=("Segoe UI", 9, "bold")).pack(anchor="w")
         self.combo_idioma = ttk.Combobox(frame, values=LISTA_IDIOMAS, state="readonly")
         self.combo_idioma.set("Spanish")
-        self.combo_idioma.pack(fill="x", pady=(2, 10))
+        self.combo_idioma.pack(fill="x", pady=(2, 8))
         self.combo_idioma.bind("<<ComboboxSelected>>", self.al_cambiar_idioma)
 
-        # Cargar archivo
-        self.lbl_archivo = ttk.Label(frame, text="Ningún archivo seleccionado", wraplength=420)
+        # 2. Archivo
+        self.lbl_archivo = ttk.Label(frame, text="Ningún archivo seleccionado", wraplength=450)
         self.lbl_archivo.pack(fill="x", pady=2)
 
         self.btn_cargar = ttk.Button(frame, text="📂 Seleccionar Archivo TXT", command=self.seleccionar_archivo)
@@ -142,7 +108,27 @@ class SimuladorSubtitulos:
 
         ttk.Separator(frame, orient='horizontal').pack(fill='x', pady=8)
 
-        # Botones de Acción
+        # 3. BARRA DE TIEMPO / NAVEGACIÓN (SEEK BAR)
+        frame_slider = ttk.LabelFrame(frame, text=" Barra de Tiempo / Avance ", padding=8)
+        frame_slider.pack(fill="x", pady=5)
+
+        self.slider_var = tk.DoubleVar(value=0)
+        self.slider = ttk.Scale(
+            frame_slider, 
+            from_=0, 
+            to=100, 
+            orient="horizontal", 
+            variable=self.slider_var,
+            command=self.al_mover_slider
+        )
+        self.slider.pack(fill="x")
+        self.slider.bind("<ButtonPress-1>", self.al_iniciar_arrastre)
+        self.slider.bind("<ButtonRelease-1>", self.al_soltar_arrastre)
+
+        self.lbl_progreso = ttk.Label(frame_slider, text="Bloque: 0 / 0 (0%)")
+        self.lbl_progreso.pack(anchor="e", pady=(4, 0))
+
+        # 4. Botones de Control
         self.btn_iniciar = ttk.Button(frame, text="▶ Empezar", command=self.iniciar, state="disabled")
         self.btn_iniciar.pack(fill="x", pady=4)
 
@@ -155,14 +141,11 @@ class SimuladorSubtitulos:
         self.btn_reiniciar = ttk.Button(frame_ctrl, text="🔄 Reiniciar", command=self.reiniciar, state="disabled")
         self.btn_reiniciar.pack(side="left", fill="x", expand=True)
 
-        # Aplicar config del idioma por defecto
         self.al_cambiar_idioma()
 
     def al_cambiar_idioma(self, event=None):
         idioma = self.combo_idioma.get()
-        
-        # Buscar el grupo al que pertenece el idioma
-        config_encontrada = CONFIG_IDIOMAS["LATINO_CIRILICO"] # Default
+        config_encontrada = CONFIG_IDIOMAS["LATINO_CIRILICO"]
         for grupo, datos in CONFIG_IDIOMAS.items():
             if idioma in datos["idiomas"]:
                 config_encontrada = datos
@@ -172,7 +155,6 @@ class SimuladorSubtitulos:
         self.font_size = config_encontrada["size"]
         self.ancho_linea = config_encontrada["width"]
 
-        # Si ya hay un archivo cargado, recalcular los bloques con el nuevo ancho
         if self.ruta_archivo:
             self.preprocesar_texto()
 
@@ -196,18 +178,47 @@ class SimuladorSubtitulos:
             messagebox.showerror("Error", f"No se pudo leer el archivo:\n{e}")
             return
 
-        # 1. Unificar saltos de línea
         lineas_limpias = [l.strip() for l in texto_completo.splitlines() if l.strip() != ""]
         texto_unificado = " ".join(lineas_limpias)
-
-        # 2. Formatear en renglones con el ancho dinámico del idioma
         renglones = textwrap.wrap(texto_unificado, width=self.ancho_linea)
 
-        # 3. Agrupar de 2 en 2 para formar los subtítulos
         self.bloques_subtitulos = []
         for i in range(0, len(renglones), 2):
             bloque = renglones[i:i+2]
             self.bloques_subtitulos.append("\n".join(bloque))
+
+        total = len(self.bloques_subtitulos)
+        self.slider.configure(to=max(total - 1, 0))
+        self.actualizar_etiqueta_progreso(0)
+
+    def actualizar_etiqueta_progreso(self, indice):
+        total = len(self.bloques_subtitulos)
+        if total == 0:
+            self.lbl_progreso.configure(text="Bloque: 0 / 0 (0%)")
+            return
+        porcentaje = int((indice / max(total - 1, 1)) * 100)
+        self.lbl_progreso.configure(text=f"Bloque: {indice + 1} / {total} ({porcentaje}%)")
+
+    # --- Métodos del Slider / Barra de Tiempo ---
+    def al_iniciar_arrastre(self, event):
+        self.arrastrando_slider = True
+
+    def al_soltar_arrastre(self, event):
+        self.arrastrando_slider = False
+        if self.bloques_subtitulos:
+            nuevo_idx = int(round(self.slider_var.get()))
+            self.indice_bloque_actual = nuevo_idx
+            # Mostrar inmediatamente el texto del bloque seleccionado en la pantalla
+            bloque_texto = self.bloques_subtitulos[self.indice_bloque_actual]
+            self.actualizar_pantalla_con_sombra(bloque_texto)
+
+    def al_mover_slider(self, val):
+        if self.arrastrando_slider and self.bloques_subtitulos:
+            idx = int(round(float(val)))
+            self.actualizar_etiqueta_progreso(idx)
+            # Muestra en vivo el subtítulo mientras arrastras el control deslizante
+            bloque_texto = self.bloques_subtitulos[idx]
+            self.actualizar_pantalla_con_sombra(bloque_texto)
 
     def actualizar_pantalla_con_sombra(self, texto):
         self.canvas.delete("all")
@@ -219,13 +230,13 @@ class SimuladorSubtitulos:
         fuente_config = (self.font_family, self.font_size, self.FONT_WEIGHT)
         d = self.DESPLAZAMIENTO_SOMBRA
 
-        # Sombra en las 4 esquinas
+        # Sombra Borde
         self.canvas.create_text(x-d, y-d, text=texto, font=fuente_config, fill=self.COLOR_SOMBRA, justify="center", anchor="center")
         self.canvas.create_text(x+d, y-d, text=texto, font=fuente_config, fill=self.COLOR_SOMBRA, justify="center", anchor="center")
         self.canvas.create_text(x-d, y+d, text=texto, font=fuente_config, fill=self.COLOR_SOMBRA, justify="center", anchor="center")
         self.canvas.create_text(x+d, y+d, text=texto, font=fuente_config, fill=self.COLOR_SOMBRA, justify="center", anchor="center")
 
-        # Texto Principal
+        # Texto Principal Blanco
         self.canvas.create_text(x, y, text=texto, font=fuente_config, fill=self.COLOR_TEXTO, justify="center", anchor="center")
 
     def iniciar(self):
@@ -249,7 +260,11 @@ class SimuladorSubtitulos:
     def reiniciar(self):
         self.escribiendo = False
         self.pausado = False
+        self.indice_bloque_actual = 0
+        self.slider_var.set(0)
+        self.actualizar_etiqueta_progreso(0)
         self.actualizar_pantalla_con_sombra("")
+        
         self.combo_idioma.configure(state="readonly")
         self.btn_cargar.configure(state="normal")
         self.btn_iniciar.configure(state="normal" if self.ruta_archivo else "disabled")
@@ -262,17 +277,22 @@ class SimuladorSubtitulos:
         PAUSA_COMA = 0.300
         TIEMPO_LECTURA_BLOQUE = 3.0
 
-        # Signos de puntuación universales (Latino, Árabe, CJK, Índico)
         SIGNOS_PUNTO = ['.', '?', '!', ':', '。', '？', '！', '।', '؟']
         SIGNOS_COMA = [',', ';', '，', '；', '،', '、']
 
-        for bloque in self.bloques_subtitulos:
+        while self.indice_bloque_actual < len(self.bloques_subtitulos):
             if not self.escribiendo: break
 
+            bloque = self.bloques_subtitulos[self.indice_bloque_actual]
             texto_acumulado = ""
 
+            # Actualizar slider en tiempo real si el usuario no lo está arrastrando
+            if not self.arrastrando_slider:
+                self.root.after(0, self.slider_var.set, self.indice_bloque_actual)
+                self.root.after(0, self.actualizar_etiqueta_progreso, self.indice_bloque_actual)
+
             for caracter in bloque:
-                while self.pausado:
+                while self.pausado or self.arrastrando_slider:
                     if not self.escribiendo: break
                     time.sleep(0.1)
 
@@ -281,7 +301,6 @@ class SimuladorSubtitulos:
                 texto_acumulado += caracter
                 self.root.after(0, self.actualizar_pantalla_con_sombra, texto_acumulado)
 
-                # Detección multilingüe de signos de puntuación
                 if caracter in SIGNOS_PUNTO:
                     pausa = PAUSA_PUNTO
                 elif caracter in SIGNOS_COMA:
@@ -295,6 +314,9 @@ class SimuladorSubtitulos:
 
             if self.escribiendo:
                 time.sleep(TIEMPO_LECTURA_BLOQUE)
+
+            # Avanzar al siguiente bloque
+            self.indice_bloque_actual += 1
 
         self.root.after(0, self.reiniciar)
 
