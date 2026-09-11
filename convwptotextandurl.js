@@ -5,10 +5,10 @@
     <textarea id="inputCode" style="box-sizing: border-box; font-family: monospace; height: 180px; margin-bottom: 10px; padding: 10px; width: 100%;"></textarea>
     
     <div style="margin-bottom: 15px;">
-        <button id="btnFlash" style="background-color: #6f42c1; border-radius: 3px; border: none; color: white; cursor: pointer; font-weight: bold; margin-right: 10px; padding: 10px 15px;">⚡ FLASH (Todo en 1)</button>
-        <button id="btnProcess" style="background-color: #28a745; border-radius: 3px; border: none; color: white; cursor: pointer; font-weight: bold; margin-right: 10px; padding: 10px 15px;">1. Procesar y copiar</button>
-        <button id="btnSecondProcess" style="background-color: #007bff; border-radius: 3px; border: none; color: white; cursor: pointer; font-weight: bold; margin-right: 10px; padding: 10px 15px;">2. Limpiar comillas y parámetros</button>
-        <button id="btnClear" style="background-color: #6c757d; border-radius: 3px; border: none; color: white; cursor: pointer; font-weight: bold; padding: 10px 15px;">Limpiar todo</button>
+        <button id="btnFlash" style="background-color: #6f42c1; border-color: currentcolor; border-image: none; border-radius: 3px; border-style: none; border-width: medium; border: none; color: white; cursor: pointer; font-weight: bold; margin-right: 10px; padding: 10px 15px;">⚡ FLASH (Todo en 1)</button>
+        <button id="btnProcess" style="background-color: #28a745; border-color: currentcolor; border-image: none; border-radius: 3px; border-style: none; border-width: medium; border: none; color: white; cursor: pointer; font-weight: bold; margin-right: 10px; padding: 10px 15px;">1. Procesar y copiar</button>
+        <button id="btnSecondProcess" style="background-color: #007bff; border-color: currentcolor; border-image: none; border-radius: 3px; border-style: none; border-width: medium; border: none; color: white; cursor: pointer; font-weight: bold; margin-right: 10px; padding: 10px 15px;">2. Limpiar comillas y parámetros</button>
+        <button id="btnClear" style="background-color: #6c757d; border-color: currentcolor; border-image: none; border-radius: 3px; border-style: none; border-width: medium; border: none; color: white; cursor: pointer; font-weight: bold; padding: 10px 15px;">Limpiar todo</button>
     </div>
     
     <label style="display: block; font-weight: bold; margin-bottom: 5px;">Resultado Limpio:</label>
@@ -30,26 +30,65 @@ function mostrarAviso() {
     }, 1800);
 }
 
+// Función auxiliar para extraer texto preservando <br> y elementos en bloque como saltos de línea
+function obtenerTextoConSaltos(nodo) {
+    const clon = nodo.cloneNode(true);
+    
+    // Reemplazar los <br> por saltos de línea reales
+    clon.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+    
+    // Reemplazar etiquetas de bloque internas por saltos de línea
+    clon.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6').forEach(bloque => {
+        bloque.prepend('\n');
+    });
+
+    return clon.textContent.trim();
+}
+
 // Función centralizada para el Paso 1 (Extracción)
 function ejecutarPaso1(input) {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = input;
     
-    // Se agregan h1, h2, h3, h4, h5, h6 para extraer subtítulos/encabezados
     const blocks = tempDiv.querySelectorAll('p, figure, li, h1, h2, h3, h4, h5, h6');
     let results = [];
     
     blocks.forEach(block => {
         const tagName = block.tagName.toLowerCase();
 
-        // Evitar duplicados si hay <p> dentro de <li> o encabezados anidados raros
+        // Evitar duplicados si hay <p> dentro de <li>
         if (tagName === 'p' && block.closest('li')) {
             return;
         }
 
-        // Si es un párrafo, elemento de lista o subtítulo/encabezado (h1-h6)
-        if (tagName === 'p' || tagName === 'li' || /^h[1-6]$/.test(tagName)) {
-            const text = block.textContent.trim();
+        if (tagName === 'li') {
+            let text = obtenerTextoConSaltos(block);
+            if (text) {
+                const parentOl = block.closest('ol');
+                if (parentOl) {
+                    // Obtener el valor inicial (1 por defecto si no está definido)
+                    const startAttr = parentOl.getAttribute('start');
+                    const baseStart = startAttr ? (parseInt(startAttr, 10) || 1) : 1;
+                    
+                    // Calcular la posición exacta dentro de este <ol>
+                    const hermanosLi = Array.from(parentOl.querySelectorAll(':scope > li'));
+                    const indexLi = hermanosLi.indexOf(block);
+                    const numeroActual = baseStart + (indexLi !== -1 ? indexLi : 0);
+
+                    // Eliminar cualquier número prefijado en el texto original para evitar "1. 1. Texto"
+                    text = text.replace(/^\d+[\.\)]\s*/, '');
+
+                    // Formato especial si inicia con "Mose" o estándar
+                    if (/^Mose\b/i.test(text)) {
+                        text = `${numeroActual}. ${text}`;
+                    } else {
+                        text = `${numeroActual}.\n${text}`;
+                    }
+                }
+                results.push(text);
+            }
+        } else if (tagName === 'p' || /^h[1-6]$/.test(tagName)) {
+            const text = obtenerTextoConSaltos(block);
             if (text) {
                 results.push(text);
             }
